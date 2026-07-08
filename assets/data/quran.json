@@ -1,0 +1,804 @@
+{
+  "code": 200,
+  "status": "OK",
+  "data": [
+    {
+      "number": 1,
+      "name": "Surah 1",
+      "englishName": "Surah 1",
+      "englishNameTranslation": "Surah 1",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 2,
+      "name": "Surah 2",
+      "englishName": "Surah 2",
+      "englishNameTranslation": "Surah 2",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 3,
+      "name": "Surah 3",
+      "englishName": "Surah 3",
+      "englishNameTranslation": "Surah 3",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 4,
+      "name": "Surah 4",
+      "englishName": "Surah 4",
+      "englishNameTranslation": "Surah 4",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 5,
+      "name": "Surah 5",
+      "englishName": "Surah 5",
+      "englishNameTranslation": "Surah 5",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 6,
+      "name": "Surah 6",
+      "englishName": "Surah 6",
+      "englishNameTranslation": "Surah 6",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 7,
+      "name": "Surah 7",
+      "englishName": "Surah 7",
+      "englishNameTranslation": "Surah 7",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 8,
+      "name": "Surah 8",
+      "englishName": "Surah 8",
+      "englishNameTranslation": "Surah 8",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 9,
+      "name": "Surah 9",
+      "englishName": "Surah 9",
+      "englishNameTranslation": "Surah 9",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 10,
+      "name": "Surah 10",
+      "englishName": "Surah 10",
+      "englishNameTranslation": "Surah 10",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 11,
+      "name": "Surah 11",
+      "englishName": "Surah 11",
+      "englishNameTranslation": "Surah 11",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 12,
+      "name": "Surah 12",
+      "englishName": "Surah 12",
+      "englishNameTranslation": "Surah 12",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 13,
+      "name": "Surah 13",
+      "englishName": "Surah 13",
+      "englishNameTranslation": "Surah 13",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 14,
+      "name": "Surah 14",
+      "englishName": "Surah 14",
+      "englishNameTranslation": "Surah 14",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 15,
+      "name": "Surah 15",
+      "englishName": "Surah 15",
+      "englishNameTranslation": "Surah 15",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 16,
+      "name": "Surah 16",
+      "englishName": "Surah 16",
+      "englishNameTranslation": "Surah 16",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 17,
+      "name": "Surah 17",
+      "englishName": "Surah 17",
+      "englishNameTranslation": "Surah 17",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 18,
+      "name": "Surah 18",
+      "englishName": "Surah 18",
+      "englishNameTranslation": "Surah 18",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 19,
+      "name": "Surah 19",
+      "englishName": "Surah 19",
+      "englishNameTranslation": "Surah 19",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 20,
+      "name": "Surah 20",
+      "englishName": "Surah 20",
+      "englishNameTranslation": "Surah 20",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 21,
+      "name": "Surah 21",
+      "englishName": "Surah 21",
+      "englishNameTranslation": "Surah 21",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 22,
+      "name": "Surah 22",
+      "englishName": "Surah 22",
+      "englishNameTranslation": "Surah 22",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 23,
+      "name": "Surah 23",
+      "englishName": "Surah 23",
+      "englishNameTranslation": "Surah 23",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 24,
+      "name": "Surah 24",
+      "englishName": "Surah 24",
+      "englishNameTranslation": "Surah 24",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 25,
+      "name": "Surah 25",
+      "englishName": "Surah 25",
+      "englishNameTranslation": "Surah 25",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 26,
+      "name": "Surah 26",
+      "englishName": "Surah 26",
+      "englishNameTranslation": "Surah 26",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 27,
+      "name": "Surah 27",
+      "englishName": "Surah 27",
+      "englishNameTranslation": "Surah 27",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 28,
+      "name": "Surah 28",
+      "englishName": "Surah 28",
+      "englishNameTranslation": "Surah 28",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 29,
+      "name": "Surah 29",
+      "englishName": "Surah 29",
+      "englishNameTranslation": "Surah 29",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 30,
+      "name": "Surah 30",
+      "englishName": "Surah 30",
+      "englishNameTranslation": "Surah 30",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 31,
+      "name": "Surah 31",
+      "englishName": "Surah 31",
+      "englishNameTranslation": "Surah 31",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 32,
+      "name": "Surah 32",
+      "englishName": "Surah 32",
+      "englishNameTranslation": "Surah 32",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 33,
+      "name": "Surah 33",
+      "englishName": "Surah 33",
+      "englishNameTranslation": "Surah 33",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 34,
+      "name": "Surah 34",
+      "englishName": "Surah 34",
+      "englishNameTranslation": "Surah 34",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 35,
+      "name": "Surah 35",
+      "englishName": "Surah 35",
+      "englishNameTranslation": "Surah 35",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 36,
+      "name": "Surah 36",
+      "englishName": "Surah 36",
+      "englishNameTranslation": "Surah 36",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 37,
+      "name": "Surah 37",
+      "englishName": "Surah 37",
+      "englishNameTranslation": "Surah 37",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 38,
+      "name": "Surah 38",
+      "englishName": "Surah 38",
+      "englishNameTranslation": "Surah 38",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 39,
+      "name": "Surah 39",
+      "englishName": "Surah 39",
+      "englishNameTranslation": "Surah 39",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 40,
+      "name": "Surah 40",
+      "englishName": "Surah 40",
+      "englishNameTranslation": "Surah 40",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 41,
+      "name": "Surah 41",
+      "englishName": "Surah 41",
+      "englishNameTranslation": "Surah 41",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 42,
+      "name": "Surah 42",
+      "englishName": "Surah 42",
+      "englishNameTranslation": "Surah 42",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 43,
+      "name": "Surah 43",
+      "englishName": "Surah 43",
+      "englishNameTranslation": "Surah 43",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 44,
+      "name": "Surah 44",
+      "englishName": "Surah 44",
+      "englishNameTranslation": "Surah 44",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 45,
+      "name": "Surah 45",
+      "englishName": "Surah 45",
+      "englishNameTranslation": "Surah 45",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 46,
+      "name": "Surah 46",
+      "englishName": "Surah 46",
+      "englishNameTranslation": "Surah 46",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 47,
+      "name": "Surah 47",
+      "englishName": "Surah 47",
+      "englishNameTranslation": "Surah 47",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 48,
+      "name": "Surah 48",
+      "englishName": "Surah 48",
+      "englishNameTranslation": "Surah 48",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 49,
+      "name": "Surah 49",
+      "englishName": "Surah 49",
+      "englishNameTranslation": "Surah 49",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 50,
+      "name": "Surah 50",
+      "englishName": "Surah 50",
+      "englishNameTranslation": "Surah 50",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 51,
+      "name": "Surah 51",
+      "englishName": "Surah 51",
+      "englishNameTranslation": "Surah 51",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 52,
+      "name": "Surah 52",
+      "englishName": "Surah 52",
+      "englishNameTranslation": "Surah 52",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 53,
+      "name": "Surah 53",
+      "englishName": "Surah 53",
+      "englishNameTranslation": "Surah 53",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 54,
+      "name": "Surah 54",
+      "englishName": "Surah 54",
+      "englishNameTranslation": "Surah 54",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 55,
+      "name": "Surah 55",
+      "englishName": "Surah 55",
+      "englishNameTranslation": "Surah 55",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 56,
+      "name": "Surah 56",
+      "englishName": "Surah 56",
+      "englishNameTranslation": "Surah 56",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 57,
+      "name": "Surah 57",
+      "englishName": "Surah 57",
+      "englishNameTranslation": "Surah 57",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 58,
+      "name": "Surah 58",
+      "englishName": "Surah 58",
+      "englishNameTranslation": "Surah 58",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 59,
+      "name": "Surah 59",
+      "englishName": "Surah 59",
+      "englishNameTranslation": "Surah 59",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 60,
+      "name": "Surah 60",
+      "englishName": "Surah 60",
+      "englishNameTranslation": "Surah 60",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 61,
+      "name": "Surah 61",
+      "englishName": "Surah 61",
+      "englishNameTranslation": "Surah 61",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 62,
+      "name": "Surah 62",
+      "englishName": "Surah 62",
+      "englishNameTranslation": "Surah 62",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 63,
+      "name": "Surah 63",
+      "englishName": "Surah 63",
+      "englishNameTranslation": "Surah 63",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 64,
+      "name": "Surah 64",
+      "englishName": "Surah 64",
+      "englishNameTranslation": "Surah 64",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 65,
+      "name": "Surah 65",
+      "englishName": "Surah 65",
+      "englishNameTranslation": "Surah 65",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 66,
+      "name": "Surah 66",
+      "englishName": "Surah 66",
+      "englishNameTranslation": "Surah 66",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 67,
+      "name": "Surah 67",
+      "englishName": "Surah 67",
+      "englishNameTranslation": "Surah 67",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 68,
+      "name": "Surah 68",
+      "englishName": "Surah 68",
+      "englishNameTranslation": "Surah 68",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 69,
+      "name": "Surah 69",
+      "englishName": "Surah 69",
+      "englishNameTranslation": "Surah 69",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 70,
+      "name": "Surah 70",
+      "englishName": "Surah 70",
+      "englishNameTranslation": "Surah 70",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 71,
+      "name": "Surah 71",
+      "englishName": "Surah 71",
+      "englishNameTranslation": "Surah 71",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 72,
+      "name": "Surah 72",
+      "englishName": "Surah 72",
+      "englishNameTranslation": "Surah 72",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 73,
+      "name": "Surah 73",
+      "englishName": "Surah 73",
+      "englishNameTranslation": "Surah 73",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 74,
+      "name": "Surah 74",
+      "englishName": "Surah 74",
+      "englishNameTranslation": "Surah 74",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 75,
+      "name": "Surah 75",
+      "englishName": "Surah 75",
+      "englishNameTranslation": "Surah 75",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 76,
+      "name": "Surah 76",
+      "englishName": "Surah 76",
+      "englishNameTranslation": "Surah 76",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 77,
+      "name": "Surah 77",
+      "englishName": "Surah 77",
+      "englishNameTranslation": "Surah 77",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 78,
+      "name": "Surah 78",
+      "englishName": "Surah 78",
+      "englishNameTranslation": "Surah 78",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 79,
+      "name": "Surah 79",
+      "englishName": "Surah 79",
+      "englishNameTranslation": "Surah 79",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 80,
+      "name": "Surah 80",
+      "englishName": "Surah 80",
+      "englishNameTranslation": "Surah 80",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 81,
+      "name": "Surah 81",
+      "englishName": "Surah 81",
+      "englishNameTranslation": "Surah 81",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 82,
+      "name": "Surah 82",
+      "englishName": "Surah 82",
+      "englishNameTranslation": "Surah 82",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 83,
+      "name": "Surah 83",
+      "englishName": "Surah 83",
+      "englishNameTranslation": "Surah 83",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 84,
+      "name": "Surah 84",
+      "englishName": "Surah 84",
+      "englishNameTranslation": "Surah 84",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 85,
+      "name": "Surah 85",
+      "englishName": "Surah 85",
+      "englishNameTranslation": "Surah 85",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 86,
+      "name": "Surah 86",
+      "englishName": "Surah 86",
+      "englishNameTranslation": "Surah 86",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 87,
+      "name": "Surah 87",
+      "englishName": "Surah 87",
+      "englishNameTranslation": "Surah 87",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 88,
+      "name": "Surah 88",
+      "englishName": "Surah 88",
+      "englishNameTranslation": "Surah 88",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 89,
+      "name": "Surah 89",
+      "englishName": "Surah 89",
+      "englishNameTranslation": "Surah 89",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 90,
+      "name": "Surah 90",
+      "englishName": "Surah 90",
+      "englishNameTranslation": "Surah 90",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 91,
+      "name": "Surah 91",
+      "englishName": "Surah 91",
+      "englishNameTranslation": "Surah 91",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 92,
+      "name": "Surah 92",
+      "englishName": "Surah 92",
+      "englishNameTranslation": "Surah 92",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 93,
+      "name": "Surah 93",
+      "englishName": "Surah 93",
+      "englishNameTranslation": "Surah 93",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 94,
+      "name": "Surah 94",
+      "englishName": "Surah 94",
+      "englishNameTranslation": "Surah 94",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 95,
+      "name": "Surah 95",
+      "englishName": "Surah 95",
+      "englishNameTranslation": "Surah 95",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 96,
+      "name": "Surah 96",
+      "englishName": "Surah 96",
+      "englishNameTranslation": "Surah 96",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 97,
+      "name": "Surah 97",
+      "englishName": "Surah 97",
+      "englishNameTranslation": "Surah 97",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 98,
+      "name": "Surah 98",
+      "englishName": "Surah 98",
+      "englishNameTranslation": "Surah 98",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 99,
+      "name": "Surah 99",
+      "englishName": "Surah 99",
+      "englishNameTranslation": "Surah 99",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 100,
+      "name": "Surah 100",
+      "englishName": "Surah 100",
+      "englishNameTranslation": "Surah 100",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 101,
+      "name": "Surah 101",
+      "englishName": "Surah 101",
+      "englishNameTranslation": "Surah 101",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 102,
+      "name": "Surah 102",
+      "englishName": "Surah 102",
+      "englishNameTranslation": "Surah 102",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 103,
+      "name": "Surah 103",
+      "englishName": "Surah 103",
+      "englishNameTranslation": "Surah 103",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 104,
+      "name": "Surah 104",
+      "englishName": "Surah 104",
+      "englishNameTranslation": "Surah 104",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 105,
+      "name": "Surah 105",
+      "englishName": "Surah 105",
+      "englishNameTranslation": "Surah 105",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 106,
+      "name": "Surah 106",
+      "englishName": "Surah 106",
+      "englishNameTranslation": "Surah 106",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 107,
+      "name": "Surah 107",
+      "englishName": "Surah 107",
+      "englishNameTranslation": "Surah 107",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 108,
+      "name": "Surah 108",
+      "englishName": "Surah 108",
+      "englishNameTranslation": "Surah 108",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 109,
+      "name": "Surah 109",
+      "englishName": "Surah 109",
+      "englishNameTranslation": "Surah 109",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 110,
+      "name": "Surah 110",
+      "englishName": "Surah 110",
+      "englishNameTranslation": "Surah 110",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 111,
+      "name": "Surah 111",
+      "englishName": "Surah 111",
+      "englishNameTranslation": "Surah 111",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 112,
+      "name": "Surah 112",
+      "englishName": "Surah 112",
+      "englishNameTranslation": "Surah 112",
+      "revelationType": "Medinan"
+    },
+    {
+      "number": 113,
+      "name": "Surah 113",
+      "englishName": "Surah 113",
+      "englishNameTranslation": "Surah 113",
+      "revelationType": "Meccan"
+    },
+    {
+      "number": 114,
+      "name": "Surah 114",
+      "englishName": "Surah 114",
+      "englishNameTranslation": "Surah 114",
+      "revelationType": "Medinan"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "number": 2,
+  "name": "البقرة",
+  "englishName": "Al-Baqarah",
+  "englishNameTranslation": "The Cow",
+  "revelationType": "Medinan",
+  "numberOfAyahs": 286,
+  "ayahs": [
+    {
+      "number": 1,
+      "arab": "الم",
+      "latin": "Alif Lam Mim",
+      "translation": "Alif Lam Mim"
+    },
+    {
+      "number": 2,
+      "arab": "ذَٰلِكَ الْكِتَابُ لَا رَيْبَ فِيهِ هُدًى لِّلْمُتَّقِينَ",
+      "latin": "Dzalikal kitaabu la raiba fiih hudan lilmuttaqiin",
+      "translation": "Kitab (Al-Qur'an) ini tidak ada keraguan padanya; petunjuk bagi mereka yang bertakwa"
+    },
+    {
+      "number": 3,
+      "arab": "الَّذِينَ يُؤْمِنُونَ بِالْغَيْبِ وَيُقِيمُونَ الصَّلَاةَ وَمِمَّا رَزَقْنَاهُمْ يُنفِقُونَ",
+      "latin": "Alladziina yu'minuna bilghaibi wa yuqiimunash shalata wa mimma razaqnahu munfiqun",
+      "translation": "Yaitu mereka yang beriman kepada yang gaib, mendirikan salat, dan menafkahkan sebahagian rezeki yang Kami anugerahkan kepada mereka"
+    },
+    {
+      "number": 4,
+      "arab": "وَالَّذِينَ يُؤْمِنُونَ بِمَا أُنزِلَ إِلَيْكَ وَمَا أُنزِلَ مِن قَبْلِكَ وَبِالْآخِرَةِ هُمْ يُوقِنُونَ",
+      "latin": "Walladziina yu'minuna bima unzila ilaika wa ma unzila min qablika wa bilakhirati hum yuqinun",
+      "translation": "Dan mereka yang beriman kepada Kitab (Al-Qur'an) yang telah diturunkan kepadamu dan Kitab-Kitab yang telah diturunkan sebelummu, serta mereka yakin akan adanya hari akhir"
+    },
+    {
+      "number": 5,
+      "arab": "أُولَٰئِكَ عَلَىٰ هُدًى مِّن رَّبِّهِمْ وَأُولَٰئِكَ هُمُ الْمُفْلِحُونَ",
+      "latin": "Ulaika 'alaa hudan mirabbihim wa ulaika humul muflihun",
+      "translation": "Mereka itu mendapat petunjuk dari Tuhan mereka, dan merekalah orang-orang yang beruntung"
+    }
+  ]
+}

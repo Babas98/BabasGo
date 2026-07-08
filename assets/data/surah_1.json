@@ -1,0 +1,52 @@
+{
+  "number": 1,
+  "name": "الفاتحة",
+  "englishName": "Al-Fatihah",
+  "englishNameTranslation": "The Opening",
+  "revelationType": "Meccan",
+  "numberOfAyahs": 7,
+  "ayahs": [
+    {
+      "number": 1,
+      "arab": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+      "latin": "Bismillaahir rahmaanir rahiim",
+      "translation": "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang"
+    },
+    {
+      "number": 2,
+      "arab": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+      "latin": "Alhamdu lillaahi rabbil 'aalamiin",
+      "translation": "Segala puji bagi Allah, Tuhan semesta alam"
+    },
+    {
+      "number": 3,
+      "arab": "الرَّحْمَٰنِ الرَّحِيمِ",
+      "latin": "Ar rahmaanir rahiim",
+      "translation": "Yang Maha Pengasih, Maha Penyayang"
+    },
+    {
+      "number": 4,
+      "arab": "مَالِكِ يَوْمِ الدِّينِ",
+      "latin": "Maaliki yaumid diin",
+      "translation": "Penguasa hari pembalasan"
+    },
+    {
+      "number": 5,
+      "arab": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+      "latin": "Iyyaaka na'budu wa iyyaaka nasta'in",
+      "translation": "Hanya kepada Engkau kami menyembah, dan hanya kepada Engkau kami meminta pertolongan"
+    },
+    {
+      "number": 6,
+      "arab": "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+      "latin": "Ihdinash shirathal mustaqiim",
+      "translation": "Tunjukkanlah kami jalan yang lurus"
+    },
+    {
+      "number": 7,
+      "arab": "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
+      "latin": "Siratal ladziina an'amta 'alaihim ghairil maghdhuubi 'alaihim wa lad dhaaliin",
+      "translation": "Yaitu jalan orang-orang yang telah Engkau beri nikmat kepada mereka; bukan (jalan) mereka yang dimurkai dan bukan (pula jalan) mereka yang sesat"
+    }
+  ]
+}
