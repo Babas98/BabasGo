@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/quran_model.dart';
@@ -11,7 +13,12 @@ class SurahDetailScreen extends StatefulWidget {
   final int? initialAyahNumber;
   final int? initialPageNumber;
 
-  const SurahDetailScreen({super.key, required this.detail, this.initialAyahNumber, this.initialPageNumber});
+  const SurahDetailScreen({
+    super.key,
+    required this.detail,
+    this.initialAyahNumber,
+    this.initialPageNumber,
+  });
 
   @override
   State<SurahDetailScreen> createState() => _SurahDetailScreenState();
@@ -23,6 +30,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   final AppSettingsService _settingsService = AppSettingsService.instance;
   final QuranAudioService _audioService = QuranAudioService();
   late final PageController _mushafPageController;
+  StreamSubscription<AudioPlaybackStatus>? _playbackStatusSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+  StreamSubscription<int>? _activeAyahSubscription;
   late final List<GlobalKey> _ayahKeys;
   final Map<int, QuranPage> _mushafPageCache = <int, QuranPage>{};
   final List<QuranSurahSummary> _surahs = <QuranSurahSummary>[];
@@ -41,7 +52,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _ayahKeys = List.generate(widget.detail.arabicAyahs.length, (_) => GlobalKey());
+    _ayahKeys = List.generate(
+      widget.detail.arabicAyahs.length,
+      (_) => GlobalKey(),
+    );
     _settingsService.addListener(_refreshSettings);
     _audioService.onPlaybackStateChanged = _refreshAudioUi;
     _audioService.onPlaybackCompleted = _handlePlaybackCompleted;
@@ -60,7 +74,28 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         setState(() => _audioErrorMessage = message);
       }
     };
-    _mushafPageController = PageController(initialPage: (widget.initialPageNumber ?? 1).clamp(1, 604) - 1);
+    _playbackStatusSubscription = _audioService.playbackStatusStream.listen(
+      (_) => _refreshAudioUi(),
+    );
+    _positionSubscription = _audioService.positionStream.listen((position) {
+      if (mounted) {
+        setState(() => _audioService.position = position);
+      }
+    });
+    _durationSubscription = _audioService.durationStream.listen((duration) {
+      if (mounted) {
+        setState(() => _audioService.duration = duration);
+      }
+    });
+    _activeAyahSubscription = _audioService.activeAyahStream.listen((ayah) {
+      if (mounted) {
+        setState(() => _currentAyah = ayah);
+        _scrollToAyah(ayah);
+      }
+    });
+    _mushafPageController = PageController(
+      initialPage: (widget.initialPageNumber ?? 1).clamp(1, 604) - 1,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadPersistedState();
@@ -70,8 +105,18 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 
   @override
+  @override
   void dispose() {
     _settingsService.removeListener(_refreshSettings);
+    _playbackStatusSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _durationSubscription?.cancel();
+    _activeAyahSubscription?.cancel();
+    _audioService.onPlaybackCompleted = null;
+    _audioService.onPlaybackStateChanged = null;
+    _audioService.onPositionChanged = null;
+    _audioService.onDurationChanged = null;
+    _audioService.onError = null;
     _service.dispose();
     _audioService.dispose();
     _scrollController.dispose();
@@ -102,22 +147,41 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         ..addAll(surahs);
       _surahNamesByNumber
         ..clear()
-        ..addEntries(surahs.map((surah) => MapEntry(surah.number, surah.englishName)));
+        ..addEntries(
+          surahs.map((surah) => MapEntry(surah.number, surah.englishName)),
+        );
     });
   }
 
   Future<void> _loadPersistedState() async {
-    final isBookmarked = await _service.isSurahBookmarked(widget.detail.summary.number);
+    final isBookmarked = await _service.isSurahBookmarked(
+      widget.detail.summary.number,
+    );
     final bookmarkedAyahs = await _service.getBookmarkedAyahs();
     final lastRead = await _service.getLastRead();
-    final isPageBookmarked = await _service.isPageBookmarked(widget.detail.summary.number, _mushafPage);
-    final isJuzBookmarked = await _service.isJuzBookmarked(widget.detail.summary.number);
+    final isPageBookmarked = await _service.isPageBookmarked(
+      widget.detail.summary.number,
+      _mushafPage,
+    );
+    final isJuzBookmarked = await _service.isJuzBookmarked(
+      widget.detail.summary.number,
+    );
 
     final initialAyah = widget.initialAyahNumber ?? 1;
-    final currentAyah = (lastRead != null && lastRead['surahNumber'] == widget.detail.summary.number)
+    final currentAyah =
+        (lastRead != null &&
+            lastRead['surahNumber'] == widget.detail.summary.number)
         ? (lastRead['ayahNumber'] as int? ?? initialAyah)
         : initialAyah;
-    final initialPage = widget.initialPageNumber ?? ((lastRead != null && lastRead['surahNumber'] == widget.detail.summary.number) ? (lastRead['pageNumber'] as int? ?? 1) : await _service.resolvePageForAyah(widget.detail.summary.number, currentAyah));
+    final initialPage =
+        widget.initialPageNumber ??
+        ((lastRead != null &&
+                lastRead['surahNumber'] == widget.detail.summary.number)
+            ? (lastRead['pageNumber'] as int? ?? 1)
+            : await _service.resolvePageForAyah(
+                widget.detail.summary.number,
+                currentAyah,
+              ));
 
     if (!mounted) {
       return;
@@ -145,7 +209,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   Future<void> _toggleSurahBookmark() async {
     await _service.toggleSurahBookmark(widget.detail.summary.number);
-    final isBookmarked = await _service.isSurahBookmarked(widget.detail.summary.number);
+    final isBookmarked = await _service.isSurahBookmarked(
+      widget.detail.summary.number,
+    );
     if (!mounted) {
       return;
     }
@@ -162,8 +228,14 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 
   Future<void> _togglePageBookmark() async {
-    await _service.togglePageBookmark(widget.detail.summary.number, _mushafPage);
-    final isPageBookmarked = await _service.isPageBookmarked(widget.detail.summary.number, _mushafPage);
+    await _service.togglePageBookmark(
+      widget.detail.summary.number,
+      _mushafPage,
+    );
+    final isPageBookmarked = await _service.isPageBookmarked(
+      widget.detail.summary.number,
+      _mushafPage,
+    );
     if (!mounted) {
       return;
     }
@@ -172,7 +244,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   Future<void> _toggleJuzBookmark() async {
     await _service.toggleJuzBookmark(widget.detail.summary.number);
-    final isJuzBookmarked = await _service.isJuzBookmarked(widget.detail.summary.number);
+    final isJuzBookmarked = await _service.isJuzBookmarked(
+      widget.detail.summary.number,
+    );
     if (!mounted) {
       return;
     }
@@ -181,12 +255,19 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   Future<void> _toggleNightMode() async {
     final currentMode = _settingsService.currentSettings.themeMode;
-    final nextMode = currentMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final nextMode = currentMode == ThemeMode.dark
+        ? ThemeMode.light
+        : ThemeMode.dark;
     await _settingsService.updateThemeMode(nextMode);
   }
 
   Future<void> _markLastRead(int ayahNumber, {int? pageNumber}) async {
-    await _service.saveLastRead(widget.detail.summary.number, ayahNumber, widget.detail.summary.englishName, pageNumber: pageNumber);
+    await _service.saveLastRead(
+      widget.detail.summary.number,
+      ayahNumber,
+      widget.detail.summary.englishName,
+      pageNumber: pageNumber,
+    );
     if (!mounted) {
       return;
     }
@@ -232,24 +313,59 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       );
       return;
     }
-    if (_audioService.autoPlay && _audioService.currentAyahNumber < widget.detail.summary.numberOfAyahs) {
+    if (_audioService.autoPlay &&
+        _audioService.currentAyahNumber < widget.detail.summary.numberOfAyahs) {
       final nextAyah = _audioService.currentAyahNumber + 1;
-      final pageNumber = await _service.resolvePageForAyah(widget.detail.summary.number, nextAyah);
+      final pageNumber = await _service.resolvePageForAyah(
+        widget.detail.summary.number,
+        nextAyah,
+      );
       await _playAyah(nextAyah, pageNumber: pageNumber);
       return;
+    }
+    if (_audioService.autoPlay) {
+      final surahs = await _service.fetchSurahs();
+      final currentIndex = surahs.indexWhere(
+        (surah) => surah.number == widget.detail.summary.number,
+      );
+      if (currentIndex >= 0 && currentIndex < surahs.length - 1) {
+        final nextSurah = surahs[currentIndex + 1];
+        final nextDetail = await _service.fetchSurahDetail(nextSurah.number);
+        if (!mounted) {
+          return;
+        }
+        await _audioService.playAyah(
+          surahNumber: nextSurah.number,
+          ayahNumber: 1,
+          totalAyahs: nextSurah.numberOfAyahs,
+        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => SurahDetailScreen(detail: nextDetail),
+            ),
+          );
+        }
+        return;
+      }
     }
     await _audioService.stop();
   }
 
   Future<void> _showAsbabunNuzul(int ayahNumber) async {
-    final text = await _service.fetchAsbabunNuzul(widget.detail.summary.number, ayahNumber);
+    final text = await _service.fetchAsbabunNuzul(
+      widget.detail.summary.number,
+      ayahNumber,
+    );
     if (!mounted) {
       return;
     }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -257,7 +373,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Asbabun Nuzul Ayat $ayahNumber', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                'Asbabun Nuzul Ayat $ayahNumber',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 12),
               Flexible(
                 child: SingleChildScrollView(
@@ -307,7 +429,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
-  Future<QuranPage> _loadMushafPage(int pageNumber, {bool animate = true}) async {
+  Future<QuranPage> _loadMushafPage(
+    int pageNumber, {
+    bool animate = true,
+  }) async {
     if (_mushafPageCache.containsKey(pageNumber)) {
       final cached = _mushafPageCache[pageNumber]!;
       if (!mounted) {
@@ -344,9 +469,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     if (!mounted) {
       return;
     }
-    _mushafPageController.animateToPage(pageNumber - 1, duration: const Duration(milliseconds: 260), curve: Curves.easeInOut);
+    _mushafPageController.animateToPage(
+      pageNumber - 1,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeInOut,
+    );
     if (page.ayahs.isNotEmpty) {
-      await _markLastRead(page.ayahs.first.numberInSurah, pageNumber: pageNumber);
+      await _markLastRead(
+        page.ayahs.first.numberInSurah,
+        pageNumber: pageNumber,
+      );
     }
   }
 
@@ -360,10 +492,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'Nomor halaman (1-604)'),
+            decoration: const InputDecoration(
+              hintText: 'Nomor halaman (1-604)',
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
             FilledButton(
               onPressed: () {
                 final value = int.tryParse(controller.text);
@@ -403,7 +540,12 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               },
             ),
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+          ],
         );
       },
     );
@@ -426,7 +568,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ..addAll(surahs);
         _surahNamesByNumber
           ..clear()
-          ..addEntries(surahs.map((surah) => MapEntry(surah.number, surah.englishName)));
+          ..addEntries(
+            surahs.map((surah) => MapEntry(surah.number, surah.englishName)),
+          );
       });
     }
     if (!mounted) {
@@ -453,14 +597,22 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               },
             ),
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+          ],
         );
       },
     );
 
     if (selectedSurah != null) {
       final detail = await _service.fetchSurahDetail(selectedSurah.number);
-      final pageNumber = await _service.resolvePageForAyah(selectedSurah.number, 1);
+      final pageNumber = await _service.resolvePageForAyah(
+        selectedSurah.number,
+        1,
+      );
       if (!mounted) {
         return;
       }
@@ -488,9 +640,18 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton.tonal(onPressed: _showPagePicker, child: Text('Hal. $_mushafPage')),
-              FilledButton.tonal(onPressed: _showJuzPicker, child: const Text('Pilih Juz')),
-              FilledButton.tonal(onPressed: _showSurahPicker, child: const Text('Pilih Surah')),
+              FilledButton.tonal(
+                onPressed: _showPagePicker,
+                child: Text('Hal. $_mushafPage'),
+              ),
+              FilledButton.tonal(
+                onPressed: _showJuzPicker,
+                child: const Text('Pilih Juz'),
+              ),
+              FilledButton.tonal(
+                onPressed: _showSurahPicker,
+                child: const Text('Pilih Surah'),
+              ),
             ],
           ),
         ),
@@ -552,7 +713,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2)),
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.2),
+                ),
                 SizedBox(width: 12),
                 Text('Memuat halaman mushaf...'),
               ],
@@ -565,9 +730,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             onPageChanged: (page) async {
               final pageNumber = page + 1;
               setState(() => _mushafPage = pageNumber);
-              final pageData = await _loadMushafPage(pageNumber, animate: false);
+              final pageData = await _loadMushafPage(
+                pageNumber,
+                animate: false,
+              );
               if (pageData.ayahs.isNotEmpty) {
-                await _markLastRead(pageData.ayahs.first.numberInSurah, pageNumber: pageNumber);
+                await _markLastRead(
+                  pageData.ayahs.first.numberInSurah,
+                  pageNumber: pageNumber,
+                );
               }
             },
             itemBuilder: (context, pageIndex) {
@@ -582,7 +753,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     }
                     final loadedPage = snapshot.data;
                     if (loadedPage == null) {
-                      return const Center(child: Text('Halaman mushaf tidak tersedia.'));
+                      return const Center(
+                        child: Text('Halaman mushaf tidak tersedia.'),
+                      );
                     }
                     return _buildMushafPageCard(context, settings, loadedPage);
                   },
@@ -596,19 +769,31 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
-  Widget _buildMushafPageCard(BuildContext context, AppSettings settings, QuranPage page) {
+  Widget _buildMushafPageCard(
+    BuildContext context,
+    AppSettings settings,
+    QuranPage page,
+  ) {
     final ayahs = page.ayahs;
     final firstAyah = ayahs.isNotEmpty ? ayahs.first : null;
-    final firstSurahName = firstAyah != null ? (_surahNamesByNumber[firstAyah.surahNumber] ?? widget.detail.summary.englishName) : widget.detail.summary.englishName;
-    final firstSurahNumber = firstAyah?.surahNumber ?? widget.detail.summary.number;
-    final finalSurahNumber = ayahs.isNotEmpty ? ayahs.last.surahNumber : widget.detail.summary.number;
+    final firstSurahName = firstAyah != null
+        ? (_surahNamesByNumber[firstAyah.surahNumber] ??
+              widget.detail.summary.englishName)
+        : widget.detail.summary.englishName;
+    final firstSurahNumber =
+        firstAyah?.surahNumber ?? widget.detail.summary.number;
+    final finalSurahNumber = ayahs.isNotEmpty
+        ? ayahs.last.surahNumber
+        : widget.detail.summary.number;
     final isMultiSurah = firstSurahNumber != finalSurahNumber;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         return Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: constraints.maxWidth > 860 ? 820 : constraints.maxWidth),
+            constraints: BoxConstraints(
+              maxWidth: constraints.maxWidth > 860 ? 820 : constraints.maxWidth,
+            ),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
@@ -632,19 +817,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(firstSurahName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                              Text(
+                                firstSurahName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
-                                isMultiSurah ? 'Halaman ${page.number} • Juz ${page.juzNumber > 0 ? page.juzNumber : 1} • Lanjutan' : 'Halaman ${page.number} • Juz ${page.juzNumber > 0 ? page.juzNumber : 1}',
-                                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+                                isMultiSurah
+                                    ? 'Halaman ${page.number} • Juz ${page.juzNumber > 0 ? page.juzNumber : 1} • Lanjutan'
+                                    : 'Halaman ${page.number} • Juz ${page.juzNumber > 0 ? page.juzNumber : 1}',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         FilledButton.icon(
                           onPressed: _togglePageBookmark,
-                          icon: Icon(_isPageBookmarked ? Icons.bookmark : Icons.bookmark_border),
-                          label: Text(_isPageBookmarked ? 'Tersimpan' : 'Bookmark'),
+                          icon: Icon(
+                            _isPageBookmarked
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                          ),
+                          label: Text(
+                            _isPageBookmarked ? 'Tersimpan' : 'Bookmark',
+                          ),
                         ),
                       ],
                     ),
@@ -659,33 +861,59 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           Text(
                             'Halaman ${page.number}',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outline),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
                           ),
                           const SizedBox(height: 10),
                           if (ayahs.isEmpty)
-                            const Center(child: Text('Halaman mushaf tidak tersedia.'))
+                            const Center(
+                              child: Text('Halaman mushaf tidak tersedia.'),
+                            )
                           else
                             ...ayahs.map((ayah) {
-                              final isCurrentPlayingAyah = _audioService.currentSurahNumber == widget.detail.summary.number && _audioService.currentAyahNumber == ayah.numberInSurah;
+                              final isCurrentPlayingAyah =
+                                  _audioService.currentSurahNumber ==
+                                      widget.detail.summary.number &&
+                                  _audioService.currentAyahNumber ==
+                                      ayah.numberInSurah;
                               return GestureDetector(
                                 onTap: () async {
-                                  await _playAyah(ayah.numberInSurah, pageNumber: page.number);
+                                  await _playAyah(
+                                    ayah.numberInSurah,
+                                    pageNumber: page.number,
+                                  );
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isCurrentPlayingAyah ? Theme.of(context).colorScheme.primaryContainer : null,
+                                    color: isCurrentPlayingAyah
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.primaryContainer
+                                        : null,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Align(
                                         alignment: Alignment.centerRight,
                                         child: Text(
                                           '﴿${ayah.numberInSurah}﴾',
-                                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -693,7 +921,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                                         ayah.text.trim(),
                                         textAlign: TextAlign.right,
                                         style: TextStyle(
-                                          fontSize: settings.fontSizeArabic * _mushafZoom,
+                                          fontSize:
+                                              settings.fontSizeArabic *
+                                              _mushafZoom,
                                           height: 1.8,
                                           fontFamily: settings.arabicFontFamily,
                                         ),
@@ -721,24 +951,33 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     final summary = widget.detail.summary;
     final settings = _settingsService.currentSettings;
     final brightness = MediaQuery.of(context).platformBrightness;
-    final isDarkMode = settings.themeMode == ThemeMode.dark || (settings.themeMode == ThemeMode.system && brightness == Brightness.dark);
+    final isDarkMode =
+        settings.themeMode == ThemeMode.dark ||
+        (settings.themeMode == ThemeMode.system &&
+            brightness == Brightness.dark);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(summary.englishName),
         actions: [
           IconButton(
-            icon: Icon(_isSurahBookmarked ? Icons.bookmark : Icons.bookmark_border),
+            icon: Icon(
+              _isSurahBookmarked ? Icons.bookmark : Icons.bookmark_border,
+            ),
             onPressed: _toggleSurahBookmark,
             tooltip: 'Bookmark surah',
           ),
           IconButton(
-            icon: Icon(_showMushafMode ? Icons.view_list : Icons.chrome_reader_mode),
+            icon: Icon(
+              _showMushafMode ? Icons.view_list : Icons.chrome_reader_mode,
+            ),
             onPressed: _toggleMushafMode,
             tooltip: 'Mode Mushaf',
           ),
           IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            icon: Icon(
+              isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            ),
             onPressed: _toggleNightMode,
             tooltip: 'Mode malam',
           ),
@@ -766,15 +1005,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(summary.englishName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(
+                  summary.englishName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text(summary.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                Text(
+                  summary.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text('Arti: ${summary.englishNameTranslation}', style: TextStyle(color: Colors.grey[700])),
+                Text(
+                  'Arti: ${summary.englishNameTranslation}',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
                 const SizedBox(height: 4),
-                Text('Jumlah ayat: ${summary.numberOfAyahs}', style: TextStyle(color: Colors.grey[700])),
+                Text(
+                  'Jumlah ayat: ${summary.numberOfAyahs}',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
                 const SizedBox(height: 4),
-                Text('Makkiyah/Madaniyah: ${summary.revelationType}', style: TextStyle(color: Colors.grey[700])),
+                Text(
+                  'Makkiyah/Madaniyah: ${summary.revelationType}',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -796,12 +1056,20 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     ),
                     OutlinedButton.icon(
                       onPressed: _togglePageBookmark,
-                      icon: Icon(_isPageBookmarked ? Icons.bookmark : Icons.bookmark_border),
+                      icon: Icon(
+                        _isPageBookmarked
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                      ),
                       label: const Text('Bookmark Halaman'),
                     ),
                     OutlinedButton.icon(
                       onPressed: _toggleJuzBookmark,
-                      icon: Icon(_isJuzBookmarked ? Icons.bookmark : Icons.bookmark_border),
+                      icon: Icon(
+                        _isJuzBookmarked
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                      ),
                       label: const Text('Bookmark Juz'),
                     ),
                   ],
@@ -824,34 +1092,73 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    IconButton(onPressed: _audioService.togglePlayPause, icon: Icon(_audioService.isPlaying ? Icons.pause : Icons.play_arrow)),
-                    IconButton(onPressed: _audioService.stop, icon: const Icon(Icons.stop)),
-                    IconButton(onPressed: () => _audioService.previousAyah(totalAyahs: widget.detail.summary.numberOfAyahs), icon: const Icon(Icons.skip_previous)),
-                    IconButton(onPressed: () => _audioService.nextAyah(totalAyahs: widget.detail.summary.numberOfAyahs), icon: const Icon(Icons.skip_next)),
+                    IconButton(
+                      onPressed: _audioService.togglePlayPause,
+                      icon: Icon(
+                        _audioService.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _audioService.stop,
+                      icon: const Icon(Icons.stop),
+                    ),
+                    IconButton(
+                      onPressed: () => _audioService.previousAyah(
+                        totalAyahs: widget.detail.summary.numberOfAyahs,
+                      ),
+                      icon: const Icon(Icons.skip_previous),
+                    ),
+                    IconButton(
+                      onPressed: () => _audioService.nextAyah(
+                        totalAyahs: widget.detail.summary.numberOfAyahs,
+                      ),
+                      icon: const Icon(Icons.skip_next),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 if (_audioService.isLoading)
                   Row(
                     children: const [
-                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
                       SizedBox(width: 12),
                       Text('Memuat audio...'),
                     ],
                   ),
                 if (!_audioService.isLoading) ...[
                   Slider(
-                    value: _audioService.position.inMilliseconds.toDouble().clamp(0, (_audioService.duration?.inMilliseconds.toDouble() ?? 1)),
-                    max: (_audioService.duration?.inMilliseconds.toDouble() ?? 1),
+                    value: _audioService.position.inMilliseconds
+                        .toDouble()
+                        .clamp(
+                          0,
+                          (_audioService.duration?.inMilliseconds.toDouble() ??
+                              1),
+                        ),
+                    max:
+                        (_audioService.duration?.inMilliseconds.toDouble() ??
+                        1),
                     onChanged: (value) async {
-                      await _audioService.seekTo(Duration(milliseconds: value.toInt()));
+                      await _audioService.seekTo(
+                        Duration(milliseconds: value.toInt()),
+                      );
                     },
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(_audioService.position.toString().split('.').first),
-                      Text((_audioService.duration ?? Duration.zero).toString().split('.').first),
+                      Text(
+                        (_audioService.duration ?? Duration.zero)
+                            .toString()
+                            .split('.')
+                            .first,
+                      ),
                     ],
                   ),
                 ],
@@ -860,7 +1167,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'Audio gagal: $_audioErrorMessage',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 12),
@@ -868,9 +1178,24 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    ChoiceChip(label: const Text('Auto play'), selected: _audioService.autoPlay, onSelected: (value) async => _audioService.setAutoPlay(value)),
-                    ChoiceChip(label: const Text('Repeat ayat'), selected: _audioService.repeatAyah, onSelected: (value) async => _audioService.setRepeatAyah(value)),
-                    ChoiceChip(label: const Text('Repeat surah'), selected: _audioService.repeatSurah, onSelected: (value) async => _audioService.setRepeatSurah(value)),
+                    ChoiceChip(
+                      label: const Text('Auto play'),
+                      selected: _audioService.autoPlay,
+                      onSelected: (value) async =>
+                          _audioService.setAutoPlay(value),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Repeat ayat'),
+                      selected: _audioService.repeatAyah,
+                      onSelected: (value) async =>
+                          _audioService.setRepeatAyah(value),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Repeat surah'),
+                      selected: _audioService.repeatSurah,
+                      onSelected: (value) async =>
+                          _audioService.setRepeatSurah(value),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -880,9 +1205,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                   children: [
                     for (final speed in <double>[0.75, 1.0, 1.25, 1.5, 2.0])
                       ChoiceChip(
-                        label: Text('${speed.toStringAsFixed(2).replaceAll('.00', '')}x'),
-                        selected: (_audioService.playbackSpeed - speed).abs() < 0.001,
-                        onSelected: (_) async => _audioService.setPlaybackSpeed(speed),
+                        label: Text(
+                          '${speed.toStringAsFixed(2).replaceAll('.00', '')}x',
+                        ),
+                        selected:
+                            (_audioService.playbackSpeed - speed).abs() < 0.001,
+                        onSelected: (_) async =>
+                            _audioService.setPlaybackSpeed(speed),
                       ),
                   ],
                 ),
@@ -892,19 +1221,30 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         initialValue: _audioService.qariCode,
-                        decoration: const InputDecoration(labelText: 'Pilih Qari'),
+                        decoration: const InputDecoration(
+                          labelText: 'Pilih Qari',
+                        ),
                         items: const [
-                          DropdownMenuItem(value: 'abdullah_basfar', child: Text('Abdullah Basfar')),
-                          DropdownMenuItem(value: 'mishary_alafasy', child: Text('Mishary Alafasy')),
-                          DropdownMenuItem(value: 'sahl_yassin', child: Text('Sahl Yassin')),
+                          DropdownMenuItem(
+                            value: 'abdullah_basfar',
+                            child: Text('Abdullah Basfar'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'mishary_alafasy',
+                            child: Text('Mishary Alafasy'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'sahl_yassin',
+                            child: Text('Sahl Yassin'),
+                          ),
                         ],
                         onChanged: (value) async {
                           if (value != null) {
                             final name = value == 'abdullah_basfar'
                                 ? 'Abdullah Basfar'
                                 : value == 'mishary_alafasy'
-                                    ? 'Mishary Alafasy'
-                                    : 'Sahl Yassin';
+                                ? 'Mishary Alafasy'
+                                : 'Sahl Yassin';
                             await _audioService.setQari(value, name);
                             await _settingsService.updateQari(value, name);
                             setState(() {});
@@ -919,98 +1259,142 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ),
           Expanded(
             child: widget.detail.arabicAyahs.isEmpty
-                ? const Center(child: Text('Data teks surah belum tersedia untuk surah ini.'))
+                ? const Center(
+                    child: Text(
+                      'Data teks surah belum tersedia untuk surah ini.',
+                    ),
+                  )
                 : _showMushafMode
-                    ? _buildMushafView(context, settings)
-                    : Scrollbar(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          itemCount: widget.detail.arabicAyahs.length,
-                          itemBuilder: (context, index) {
-                            final arab = widget.detail.arabicAyahs[index];
-                            final translit = index < widget.detail.transliterationAyahs.length
-                                ? widget.detail.transliterationAyahs[index]
-                                : QuranAyah(surahNumber: summary.number, number: index + 1, numberInSurah: index + 1, juz: 0, text: '');
-                            final translation = index < widget.detail.translationAyahs.length
-                                ? widget.detail.translationAyahs[index]
-                                : QuranAyah(surahNumber: summary.number, number: index + 1, numberInSurah: index + 1, juz: 0, text: '');
-                            final isAyahBookmarked = _bookmarkedAyahs.contains('${summary.number}:${arab.numberInSurah}');
-                            final isCurrentPlayingAyah = _audioService.currentSurahNumber == widget.detail.summary.number && _audioService.currentAyahNumber == arab.numberInSurah;
-                            return Container(
-                              key: _ayahKeys[index],
-                              child: Card(
-                                color: isCurrentPlayingAyah ? Theme.of(context).colorScheme.primaryContainer : null,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                child: InkWell(
-                                  onTap: () async {
-                                    await _markLastRead(arab.numberInSurah);
-                                    await _playAyah(arab.numberInSurah);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                ? _buildMushafView(context, settings)
+                : Scrollbar(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      itemCount: widget.detail.arabicAyahs.length,
+                      itemBuilder: (context, index) {
+                        final arab = widget.detail.arabicAyahs[index];
+                        final translit =
+                            index < widget.detail.transliterationAyahs.length
+                            ? widget.detail.transliterationAyahs[index]
+                            : QuranAyah(
+                                surahNumber: summary.number,
+                                number: index + 1,
+                                numberInSurah: index + 1,
+                                juz: 0,
+                                text: '',
+                              );
+                        final translation =
+                            index < widget.detail.translationAyahs.length
+                            ? widget.detail.translationAyahs[index]
+                            : QuranAyah(
+                                surahNumber: summary.number,
+                                number: index + 1,
+                                numberInSurah: index + 1,
+                                juz: 0,
+                                text: '',
+                              );
+                        final isAyahBookmarked = _bookmarkedAyahs.contains(
+                          '${summary.number}:${arab.numberInSurah}',
+                        );
+                        final isCurrentPlayingAyah =
+                            _audioService.currentSurahNumber ==
+                                widget.detail.summary.number &&
+                            _audioService.currentAyahNumber ==
+                                arab.numberInSurah;
+                        return Container(
+                          key: _ayahKeys[index],
+                          child: Card(
+                            color: isCurrentPlayingAyah
+                                ? Theme.of(context).colorScheme.primaryContainer
+                                : null,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: InkWell(
+                              onTap: () async {
+                                await _markLastRead(arab.numberInSurah);
+                                await _playAyah(arab.numberInSurah);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Row(
                                       children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                'Ayat ${arab.numberInSurah}',
-                                                style: TextStyle(color: Colors.grey[600]),
-                                              ),
+                                        Expanded(
+                                          child: Text(
+                                            'Ayat ${arab.numberInSurah}',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
                                             ),
-                                            TextButton.icon(
-                                              onPressed: () => _showAsbabunNuzul(arab.numberInSurah),
-                                              icon: const Icon(Icons.lightbulb_outline),
-                                              label: const Text('Asbabun Nuzul'),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(isAyahBookmarked ? Icons.bookmark : Icons.bookmark_border),
-                                              onPressed: () => _toggleAyahBookmark(arab.numberInSurah),
-                                              tooltip: 'Bookmark ayat',
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          arab.text,
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                            fontSize: settings.fontSizeArabic,
-                                            height: 1.6,
-                                            fontFamily: settings.arabicFontFamily,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          translit.text,
-                                          style: TextStyle(
-                                            fontSize: settings.fontSizeLatin,
-                                            color: Colors.black87,
-                                            fontFamily: settings.appFontFamily,
+                                        TextButton.icon(
+                                          onPressed: () => _showAsbabunNuzul(
+                                            arab.numberInSurah,
                                           ),
+                                          icon: const Icon(
+                                            Icons.lightbulb_outline,
+                                          ),
+                                          label: const Text('Asbabun Nuzul'),
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          translation.text,
-                                          style: TextStyle(
-                                            fontSize: settings.fontSizeTranslation,
-                                            color: Colors.black54,
-                                            fontFamily: settings.appFontFamily,
+                                        IconButton(
+                                          icon: Icon(
+                                            isAyahBookmarked
+                                                ? Icons.bookmark
+                                                : Icons.bookmark_border,
                                           ),
+                                          onPressed: () => _toggleAyahBookmark(
+                                            arab.numberInSurah,
+                                          ),
+                                          tooltip: 'Bookmark ayat',
                                         ),
                                       ],
                                     ),
-                                  ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      arab.text,
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                        fontSize: settings.fontSizeArabic,
+                                        height: 1.6,
+                                        fontFamily: settings.arabicFontFamily,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      translit.text,
+                                      style: TextStyle(
+                                        fontSize: settings.fontSizeLatin,
+                                        color: Colors.black87,
+                                        fontFamily: settings.appFontFamily,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      translation.text,
+                                      style: TextStyle(
+                                        fontSize: settings.fontSizeTranslation,
+                                        color: Colors.black54,
+                                        fontFamily: settings.appFontFamily,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

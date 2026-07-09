@@ -8,24 +8,38 @@ import 'package:just_audio/just_audio.dart';
 
 import 'file_system.dart';
 
+enum AudioPlaybackStatus { idle, loading, playing, paused, completed, error }
+
 class QuranAudioService {
-  QuranAudioService() {
+  QuranAudioService._() {
     _initAudioSession();
-    _player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        onPlaybackCompleted?.call();
-      }
-    });
-    _player.positionStream.listen((position) {
-      onPositionChanged?.call(position);
-    });
-    _player.durationStream.listen((duration) {
-      onDurationChanged?.call(duration);
-    });
+    _attachPlayerListeners();
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  static final QuranAudioService _instance = QuranAudioService._();
+  factory QuranAudioService() => _instance;
+
+  AudioPlayer _player = AudioPlayer();
   AudioPlayer get player => _player;
+
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+
+  final StreamController<AudioPlaybackStatus> _playbackStatusController =
+      StreamController.broadcast();
+  final StreamController<Duration> _positionController =
+      StreamController.broadcast();
+  final StreamController<Duration?> _durationController =
+      StreamController.broadcast();
+  final StreamController<int> _activeAyahController =
+      StreamController.broadcast();
+
+  Stream<AudioPlaybackStatus> get playbackStatusStream =>
+      _playbackStatusController.stream;
+  Stream<Duration> get positionStream => _positionController.stream;
+  Stream<Duration?> get durationStream => _durationController.stream;
+  Stream<int> get activeAyahStream => _activeAyahController.stream;
 
   bool _isPlaying = false;
   bool get isPlaying => _isPlaying;
@@ -34,7 +48,6 @@ class QuranAudioService {
   bool get isLoading => _isLoading;
 
   Duration position = Duration.zero;
-
   Duration? duration;
 
   String? _lastError;
@@ -47,6 +60,8 @@ class QuranAudioService {
 
   int _currentAyahNumber = 1;
   int get currentAyahNumber => _currentAyahNumber;
+
+  int _activeTotalAyahs = 1;
 
   String _qariCode = 'abdullah_basfar';
   String _qariName = 'Abdullah Basfar';
@@ -68,9 +83,22 @@ class QuranAudioService {
   bool _shuffle = false;
   bool get shuffle => _shuffle;
 
+  void Function()? onPlaybackCompleted;
+  void Function(Duration)? onPositionChanged;
+  void Function(Duration?)? onDurationChanged;
+  void Function()? onPlaybackStateChanged;
+
   Future<void> setQari(String code, String name) async {
+    final shouldReload = _qariCode != code || _qariName != name;
     _qariCode = code;
     _qariName = name;
+    if (shouldReload && (_isPlaying || _isLoading) && _currentSurahNumber > 0) {
+      await playAyah(
+        surahNumber: _currentSurahNumber,
+        ayahNumber: _currentAyahNumber,
+        totalAyahs: _activeTotalAyahs,
+      );
+    }
   }
 
   Future<void> setPlaybackSpeed(double speed) async {
@@ -84,30 +112,17 @@ class QuranAudioService {
 
   Future<void> setRepeatAyah(bool value) async {
     _repeatAyah = value;
-    if (value) {
-      await _player.setLoopMode(LoopMode.one);
-    } else if (!_repeatSurah) {
-      await _player.setLoopMode(LoopMode.off);
-    }
+    await _applyLoopMode();
   }
 
   Future<void> setRepeatSurah(bool value) async {
     _repeatSurah = value;
-    if (value) {
-      await _player.setLoopMode(LoopMode.off);
-    } else if (!_repeatAyah) {
-      await _player.setLoopMode(LoopMode.off);
-    }
+    await _applyLoopMode();
   }
 
   Future<void> setShuffle(bool value) async {
     _shuffle = value;
   }
-
-  void Function()? onPlaybackCompleted;
-  void Function(Duration)? onPositionChanged;
-  void Function(Duration?)? onDurationChanged;
-  void Function()? onPlaybackStateChanged;
 
   Future<void> _initAudioSession() async {
     try {
@@ -116,54 +131,105 @@ class QuranAudioService {
     } catch (_) {}
   }
 
+  void _attachPlayerListeners() {
+    _playerStateSubscription = _player.playerStateStream.listen((state) {
+      if (state.playing) {
+        _isPlaying = true;
+        _isLoading = false;
+        _emitPlaybackStatus(AudioPlaybackStatus.playing);
+      } else if (state.processingState == ProcessingState.loading) {
+        _isLoading = true;
+        _emitPlaybackStatus(AudioPlaybackStatus.loading);
+      } else if (!state.playing &&
+          state.processingState == ProcessingState.ready) {
+        _isPlaying = false;
+        _emitPlaybackStatus(AudioPlaybackStatus.paused);
+      } else if (state.processingState == ProcessingState.completed) {
+        _isPlaying = false;
+        _emitPlaybackStatus(AudioPlaybackStatus.completed);
+        onPlaybackCompleted?.call();
+      } else if (state.processingState == ProcessingState.idle) {
+        _isPlaying = false;
+        _emitPlaybackStatus(AudioPlaybackStatus.idle);
+      }
+    });
+
+    _positionSubscription = _player.positionStream.listen((newPosition) {
+      position = newPosition;
+      _positionController.add(newPosition);
+      onPositionChanged?.call(newPosition);
+    });
+
+    _durationSubscription = _player.durationStream.listen((newDuration) {
+      duration = newDuration;
+      _durationController.add(newDuration);
+      onDurationChanged?.call(newDuration);
+    });
+  }
+
+  Future<void> _applyLoopMode() async {
+    if (_repeatAyah) {
+      await _player.setLoopMode(LoopMode.one);
+    } else {
+      await _player.setLoopMode(LoopMode.off);
+    }
+  }
+
+  void _emitPlaybackStatus(AudioPlaybackStatus status) {
+    _playbackStatusController.add(status);
+    onPlaybackStateChanged?.call();
+  }
+
+  void _emitActiveAyah() {
+    _activeAyahController.add(_currentAyahNumber);
+  }
+
   Future<void> playAyah({
     required int surahNumber,
     required int ayahNumber,
     required int totalAyahs,
   }) async {
+    _activeTotalAyahs = totalAyahs;
     _currentSurahNumber = surahNumber;
     _currentAyahNumber = ayahNumber;
-    _isLoading = true;
     _lastError = null;
-    onPlaybackStateChanged?.call();
+    _isLoading = true;
+    _emitPlaybackStatus(AudioPlaybackStatus.loading);
+    _emitActiveAyah();
 
-    final localPath = await _buildLocalAudioPath(surahNumber: surahNumber, ayahNumber: ayahNumber);
-    final isOffline = localPath.isNotEmpty && await fileExists(localPath);
+    final localPath = await _buildLocalAudioPath(
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+    );
+    final hasLocalFile = localPath.isNotEmpty && await fileExists(localPath);
 
     try {
-      for (var attempt = 1; attempt <= 2; attempt++) {
-        try {
-          if (isOffline) {
-            await _player.setAudioSource(AudioSource.uri(Uri.file(localPath)));
-          } else {
-            final audioUrl = await resolveAudioUrl(surahNumber: surahNumber, ayahNumber: ayahNumber);
-            if (audioUrl == null || audioUrl.isEmpty) {
-              throw Exception('Tidak dapat menemukan URL audio.');
-            }
-            await _player.setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
-          }
-          await _player.setSpeed(_playbackSpeed);
-          if (_repeatAyah) {
-            await _player.setLoopMode(LoopMode.one);
-          } else {
-            await _player.setLoopMode(LoopMode.off);
-          }
-          await _player.play();
-          _isPlaying = true;
-          _isLoading = false;
-          onPlaybackStateChanged?.call();
-          return;
-        } catch (error) {
-          if (attempt == 2) {
-            throw error;
-          }
+      await _player.stop();
+      if (hasLocalFile) {
+        await _player.setAudioSource(AudioSource.uri(Uri.file(localPath)));
+      } else {
+        final audioUrl = await resolveAudioUrl(
+          surahNumber: surahNumber,
+          ayahNumber: ayahNumber,
+        );
+        if (audioUrl == null || audioUrl.isEmpty) {
+          throw Exception('Tidak dapat menemukan URL audio untuk ayat ini.');
         }
+        await _player.setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
       }
+      await _player.setSpeed(_playbackSpeed);
+      await _applyLoopMode();
+      await _player.play();
+      _isPlaying = true;
+      _isLoading = false;
+      _emitPlaybackStatus(AudioPlaybackStatus.playing);
+      _emitActiveAyah();
     } catch (error) {
       _lastError = error.toString();
-      _isLoading = false;
       _isPlaying = false;
-      onPlaybackStateChanged?.call();
+      _isLoading = false;
+      position = Duration.zero;
+      _emitPlaybackStatus(AudioPlaybackStatus.error);
       onError?.call(_lastError ?? 'Terjadi kesalahan pemutaran audio.');
     }
   }
@@ -179,63 +245,87 @@ class QuranAudioService {
   Future<void> pause() async {
     await _player.pause();
     _isPlaying = false;
-    onPlaybackStateChanged?.call();
+    _emitPlaybackStatus(AudioPlaybackStatus.paused);
   }
 
   Future<void> resume() async {
-    if (_player.processingState == ProcessingState.idle) {
+    final currentState = _player.processingState;
+    if (currentState == ProcessingState.idle ||
+        currentState == ProcessingState.completed) {
       await playAyah(
         surahNumber: _currentSurahNumber,
         ayahNumber: _currentAyahNumber,
-        totalAyahs: 1,
+        totalAyahs: _activeTotalAyahs,
       );
       return;
     }
-    await _player.play();
-    _isPlaying = true;
-    onPlaybackStateChanged?.call();
+
+    if (!_isPlaying) {
+      await _player.play();
+      _isPlaying = true;
+      _emitPlaybackStatus(AudioPlaybackStatus.playing);
+    }
   }
 
   Future<void> stop() async {
     await _player.stop();
     _isPlaying = false;
+    _isLoading = false;
     position = Duration.zero;
-    onPlaybackStateChanged?.call();
+    _emitPlaybackStatus(AudioPlaybackStatus.idle);
   }
 
   Future<void> seekTo(Duration newPosition) async {
     await _player.seek(newPosition);
     position = newPosition;
+    _positionController.add(newPosition);
   }
 
   Future<void> nextAyah({required int totalAyahs}) async {
-    final nextAyah = _currentAyahNumber + 1;
-    if (nextAyah <= totalAyahs) {
-      await playAyah(surahNumber: _currentSurahNumber, ayahNumber: nextAyah, totalAyahs: totalAyahs);
+    if (_currentAyahNumber < totalAyahs) {
+      await playAyah(
+        surahNumber: _currentSurahNumber,
+        ayahNumber: _currentAyahNumber + 1,
+        totalAyahs: totalAyahs,
+      );
     }
   }
 
   Future<void> previousAyah({required int totalAyahs}) async {
-    final previousAyah = _currentAyahNumber - 1;
-    if (previousAyah >= 1) {
-      await playAyah(surahNumber: _currentSurahNumber, ayahNumber: previousAyah, totalAyahs: totalAyahs);
+    if (_currentAyahNumber > 1) {
+      await playAyah(
+        surahNumber: _currentSurahNumber,
+        ayahNumber: _currentAyahNumber - 1,
+        totalAyahs: totalAyahs,
+      );
     }
   }
 
   Future<void> downloadCurrentAudio() async {
-    final localPath = await _buildLocalAudioPath(surahNumber: _currentSurahNumber, ayahNumber: _currentAyahNumber);
-    final remoteUrl = await resolveAudioUrl(surahNumber: _currentSurahNumber, ayahNumber: _currentAyahNumber);
+    final localPath = await _buildLocalAudioPath(
+      surahNumber: _currentSurahNumber,
+      ayahNumber: _currentAyahNumber,
+    );
+    final remoteUrl = await resolveAudioUrl(
+      surahNumber: _currentSurahNumber,
+      ayahNumber: _currentAyahNumber,
+    );
     if (remoteUrl == null || remoteUrl.isEmpty || localPath.isEmpty) {
       return;
     }
-    final response = await http.get(Uri.parse(remoteUrl));
-    if (response.statusCode == 200) {
-      await writeFile(localPath, response.bodyBytes);
-    }
+    try {
+      final response = await http.get(Uri.parse(remoteUrl));
+      if (response.statusCode == 200) {
+        await writeFile(localPath, response.bodyBytes);
+      }
+    } catch (_) {}
   }
 
   Future<void> deleteCurrentAudio() async {
-    final localPath = await _buildLocalAudioPath(surahNumber: _currentSurahNumber, ayahNumber: _currentAyahNumber);
+    final localPath = await _buildLocalAudioPath(
+      surahNumber: _currentSurahNumber,
+      ayahNumber: _currentAyahNumber,
+    );
     if (localPath.isEmpty) {
       return;
     }
@@ -243,7 +333,10 @@ class QuranAudioService {
   }
 
   Future<bool> isCurrentAudioAvailableOffline() async {
-    final localPath = await _buildLocalAudioPath(surahNumber: _currentSurahNumber, ayahNumber: _currentAyahNumber);
+    final localPath = await _buildLocalAudioPath(
+      surahNumber: _currentSurahNumber,
+      ayahNumber: _currentAyahNumber,
+    );
     if (localPath.isEmpty) {
       return false;
     }
@@ -251,10 +344,19 @@ class QuranAudioService {
   }
 
   Future<void> dispose() async {
+    await _player.stop();
     await _player.dispose();
+    await _playerStateSubscription?.cancel();
+    await _positionSubscription?.cancel();
+    await _durationSubscription?.cancel();
+    _player = AudioPlayer();
+    _attachPlayerListeners();
   }
 
-  Future<String> _buildLocalAudioPath({required int surahNumber, required int ayahNumber}) async {
+  Future<String> _buildLocalAudioPath({
+    required int surahNumber,
+    required int ayahNumber,
+  }) async {
     final dirPath = await getApplicationDocumentsDirectoryPath();
     if (dirPath.isEmpty) {
       return '';
@@ -262,17 +364,25 @@ class QuranAudioService {
     return '$dirPath/quran_${_qariCode}_${surahNumber.toString().padLeft(3, '0')}_${ayahNumber.toString().padLeft(3, '0')}.mp3';
   }
 
-  Future<String?> resolveAudioUrl({required int surahNumber, required int ayahNumber}) async {
+  Future<String?> resolveAudioUrl({
+    required int surahNumber,
+    required int ayahNumber,
+  }) async {
     final editionCandidates = _editionCandidatesForQari();
     for (final edition in editionCandidates) {
       try {
-        final url = 'https://api.alquran.cloud/v1/ayah/$surahNumber:$ayahNumber/$edition';
-        final response = await http.get(Uri.parse(url));
+        final url =
+            'https://api.alquran.cloud/v1/ayah/$surahNumber:$ayahNumber/$edition';
+        final response = await http
+            .get(Uri.parse(url), headers: {'Accept': 'application/json'})
+            .timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final decoded = jsonDecode(response.body);
           if (decoded is Map<String, dynamic>) {
             final data = decoded['data'];
-            final audioUrl = data is Map<String, dynamic> ? data['audio']?.toString() : null;
+            final audioUrl = data is Map<String, dynamic>
+                ? data['audio']?.toString()
+                : null;
             if (audioUrl != null && audioUrl.isNotEmpty) {
               return audioUrl;
             }
@@ -282,17 +392,34 @@ class QuranAudioService {
     }
 
     try {
-      final verseNumber = await _readVerseNumberFromAsset(surahNumber: surahNumber, ayahNumber: ayahNumber);
+      final verseNumber = await _readVerseNumberFromAsset(
+        surahNumber: surahNumber,
+        ayahNumber: ayahNumber,
+      );
       if (verseNumber > 0) {
-        final edition = editionCandidates.firstWhere((candidate) => candidate.isNotEmpty, orElse: () => 'ar.alafasy');
-        return 'https://cdn.islamic.network/quran/audio/128/$edition/$verseNumber.mp3';
+        final edition = editionCandidates.firstWhere(
+          (candidate) => candidate.isNotEmpty,
+          orElse: () => 'ar.alafasy',
+        );
+        final fallbackCandidates = <String>{
+          'https://cdn.islamic.network/quran/audio/128/$edition/$verseNumber.mp3',
+          'https://cdn.islamic.network/quran/audio/32/$edition/$verseNumber.mp3',
+        }.toList();
+        return fallbackCandidates.firstWhere(
+          (candidate) => candidate.isNotEmpty,
+          orElse: () =>
+              'https://cdn.islamic.network/quran/audio/128/$edition/$verseNumber.mp3',
+        );
       }
     } catch (_) {}
 
     return null;
   }
 
-  Future<int> _readVerseNumberFromAsset({required int surahNumber, required int ayahNumber}) async {
+  Future<int> _readVerseNumberFromAsset({
+    required int surahNumber,
+    required int ayahNumber,
+  }) async {
     final raw = await rootBundle.loadString('assets/data/quran_complete.json');
     final decoded = jsonDecode(raw);
     if (decoded is! Map<String, dynamic>) {
@@ -310,7 +437,8 @@ class QuranAudioService {
         final ayahs = entry['ayahs'];
         if (ayahs is List) {
           for (final ayah in ayahs.whereType<Map<String, dynamic>>()) {
-            final currentAyahNumber = int.tryParse(ayah['numberInSurah']?.toString() ?? '') ?? 0;
+            final currentAyahNumber =
+                int.tryParse(ayah['numberInSurah']?.toString() ?? '') ?? 0;
             if (currentAyahNumber == ayahNumber) {
               return int.tryParse(ayah['number']?.toString() ?? '') ?? 0;
             }

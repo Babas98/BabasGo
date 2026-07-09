@@ -56,9 +56,13 @@ class _MurottalScreenState extends State<MurottalScreen> {
     });
   }
 
-  Future<void> _playSurah(int surahNumber) async {
+  Future<void> _playSurah(int surahNumber, int totalAyahs) async {
     await _audioService.setQari(_selectedQariCode, _selectedQariName);
-    await _audioService.playAyah(surahNumber: surahNumber, ayahNumber: 1, totalAyahs: 1);
+    await _audioService.playAyah(
+      surahNumber: surahNumber,
+      ayahNumber: 1,
+      totalAyahs: totalAyahs,
+    );
   }
 
   @override
@@ -80,9 +84,18 @@ class _MurottalScreenState extends State<MurottalScreen> {
                   initialValue: _selectedQariCode,
                   decoration: const InputDecoration(labelText: 'Pilih Qari'),
                   items: const [
-                    DropdownMenuItem(value: 'abdullah_basfar', child: Text('Abdullah Basfar')),
-                    DropdownMenuItem(value: 'mishary_alafasy', child: Text('Mishary Alafasy')),
-                    DropdownMenuItem(value: 'sahl_yassin', child: Text('Sahl Yassin')),
+                    DropdownMenuItem(
+                      value: 'abdullah_basfar',
+                      child: Text('Abdullah Basfar'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'mishary_alafasy',
+                      child: Text('Mishary Alafasy'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'sahl_yassin',
+                      child: Text('Sahl Yassin'),
+                    ),
                   ],
                   onChanged: (value) async {
                     if (value == null) {
@@ -91,8 +104,8 @@ class _MurottalScreenState extends State<MurottalScreen> {
                     final name = value == 'abdullah_basfar'
                         ? 'Abdullah Basfar'
                         : value == 'mishary_alafasy'
-                            ? 'Mishary Alafasy'
-                            : 'Sahl Yassin';
+                        ? 'Mishary Alafasy'
+                        : 'Sahl Yassin';
                     setState(() {
                       _selectedQariCode = value;
                       _selectedQariName = name;
@@ -108,12 +121,21 @@ class _MurottalScreenState extends State<MurottalScreen> {
                   itemBuilder: (context, index) {
                     final surah = surahs[index];
                     return ListTile(
-                      leading: CircleAvatar(child: Text(surah.number.toString())),
+                      leading: CircleAvatar(
+                        child: Text(surah.number.toString()),
+                      ),
                       title: Text(surah.englishName),
-                      subtitle: Text('${surah.name} • ${surah.numberOfAyahs} ayat'),
+                      subtitle: Text(
+                        '${surah.name} • ${surah.numberOfAyahs} ayat',
+                      ),
                       trailing: IconButton(
-                        icon: Icon(_audioService.currentSurahNumber == surah.number ? Icons.pause_circle : Icons.play_circle_fill),
-                        onPressed: () => _playSurah(surah.number),
+                        icon: Icon(
+                          _audioService.currentSurahNumber == surah.number
+                              ? Icons.pause_circle
+                              : Icons.play_circle_fill,
+                        ),
+                        onPressed: () =>
+                            _playSurah(surah.number, surah.numberOfAyahs),
                       ),
                     );
                   },
